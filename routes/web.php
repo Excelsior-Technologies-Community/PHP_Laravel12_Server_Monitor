@@ -8,3 +8,4 @@ Route::get('/dashboard', [ServerController::class, 'index'])->name('dashboard');
 Route::get('/', function () {
     return view('welcome');
 });
+
