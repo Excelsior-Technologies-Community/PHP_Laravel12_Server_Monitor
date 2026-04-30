@@ -283,4 +283,7 @@ If running on:
 ---
 
 Your PHP_Laravel12_Server_Monitor Project is now ready!
+<<<<<<< HEAD
 
+=======
+>>>>>>> development
