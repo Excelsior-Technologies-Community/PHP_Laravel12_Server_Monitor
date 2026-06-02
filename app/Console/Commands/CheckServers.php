@@ -17,18 +17,35 @@ class CheckServers extends Command
         $servers = Host::all();
 
         foreach ($servers as $server) {
+            $startTime = microtime(true);
+            $status = 'down';
+            $responseTime = 0;
 
-            $status = $server->isHealthy() ? 'up' : 'down';
+            $port = $server->port ?? 80;
+            $ip = $server->ip ?? $server->ip_address;
 
-            // Save log
+            if ($ip) {
+                $connection = @fsockopen($ip, (int)$port, $errno, $errstr, 2);
+
+                if (is_resource($connection)) {
+                    $status = 'up';
+                    fclose($connection);
+                    $responseTime = round((microtime(true) - $startTime) * 1000);
+                }
+            }
+
+            if ($status === 'down' && method_exists($server, 'isHealthy')) {
+                $status = $server->isHealthy() ? 'up' : 'down';
+            }
+
             ServerLog::create([
                 'server_name' => $server->name,
                 'status' => $status,
                 'message' => $status == 'down' ? 'Server not responding' : 'Server is healthy',
-                'checked_at' => now()
+                'checked_at' => now(),
+                'response_time' => $responseTime
             ]);
 
-            // OPTIONAL EMAIL ALERT
             if ($status == 'down') {
                 Mail::raw("Server {$server->name} is DOWN!", function ($msg) {
                     $msg->to('admin@example.com')
